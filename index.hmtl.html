@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sec 1 EOY Science — Canvas Viewer</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f5;color:#222}
+#toolbar{position:fixed;z-index:20;top:14px;left:14px;display:flex;gap:7px;align-items:center;background:rgba(255,255,255,.94);padding:8px 10px;border:1px solid #ddd;border-radius:10px;box-shadow:0 3px 14px rgba(0,0,0,.12)}
+button{border:1px solid #ccc;background:#fff;border-radius:7px;padding:7px 10px;cursor:pointer;font-size:14px}
+button:hover{background:#f0f0f0}
+#zoomLabel{min-width:55px;text-align:center;font-size:13px}
+#hint{position:fixed;z-index:20;right:14px;bottom:14px;background:rgba(255,255,255,.9);border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:12px;color:#666}
+#viewport{position:absolute;inset:0;overflow:hidden;cursor:grab}
+#viewport.dragging{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+.edge{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.card{position:absolute;background:#fff;border:1px solid #cfcfcf;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.10);overflow:auto;padding:18px}
+.card.file{border-color:#aaa}
+.card-title{font-size:16px;font-weight:650;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid #e3e3e3}
+.card h1,.card h2,.card h3{margin:0 0 10px}
+.card h1{font-size:24px} .card h2{font-size:20px} .card h3{font-size:17px}
+.card p{margin:0 0 9px;line-height:1.45}
+.card ul{margin:0 0 10px;padding-left:21px}
+.card li{margin:4px 0;line-height:1.4}
+.card code{background:#f1f1f1;padding:1px 4px;border-radius:4px}
+.card pre{background:#f1f1f1;padding:8px;border-radius:6px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="fit">Fit Canvas</button>
+  <button id="reset">100%</button>
+  <button id="minus">−</button>
+  <span id="zoomLabel">100%</span>
+  <button id="plus">+</button>
+</div>
+<div id="hint">Drag to pan · Scroll to zoom</div>
+<div id="viewport"><div id="world"></div></div>
+<script>
+const DATA={"nodes": [{"id": "7e4b8746ce7dff78", "x": -112, "y": -960, "w": 250, "h": 60, "type": "text", "content": "<h1>Biology<\/h1>"}, {"id": "267dd47a549572f0", "x": 518, "y": -960, "w": 250, "h": 60, "type": "text", "content": "<h1>Physics<\/h1>"}, {"id": "e4369d02f2241516", "x": 240, "y": -1140, "w": 160, "h": 80, "type": "text", "content": "<h1>Science<\/h1>"}, {"id": "ad5422f860d3c078", "x": 968, "y": -1120, "w": 250, "h": 60, "type": "text", "content": "<h1>Forces<\/h1>"}, {"id": "e36aa2a84933c61a", "x": 968, "y": -800, "w": 250, "h": 60, "type": "text", "content": "<h1>Energy<\/h1>"}, {"id": "ed95a89d29162288", "x": 893, "y": -560, "w": 400, "h": 400, "type": "file", "content": "<div class=\"card-title\">Energy stores.md<\/div><div class=\"note-content\"><p>Kinetic store <\/p>\n<p>(0.5 <em> mass <\/em>kg<em> <\/em> (speed <em>m/s<\/em>)^2)<\/p>\n<p>Gravitational potential store <\/p>\n<p>(mass <em>kg<\/em> <em> gravity strength(usually 10<\/em>N/kg<em>) <\/em> vertical height <em>m<\/em>)<\/p>\n<p>Elastic potential store (0.5 <em> stiffness <\/em>Nm<em> <\/em> (extension or compression <em>m<\/em>)^2)<\/p>\n<p>Chemical potential store (likely not tested)<\/p>\n<p>Internal (Thermal) store (likely not tested)<\/p>\n<p>Nuclear store (likely not tested)<\/p>\n<p>Energy can be transferred by one of the four<\/p>\n<p>1. Mechanically - force moving an object through a distance<\/p>\n<p>2. Electrically - electricity charge moving due to potential difference<\/p>\n<p>3. Heating - heat moving to cooler area due to temperature difference<\/p>\n<p>&gt; [!NOTE]- Extra<\/p>\n<p>&gt; (Main cause of energy loss &quot;Some of the energy is converted to other energy stores like heat&quot;)<\/p>\n<p>4. Radiation - energy transferred as a wave (likely not tested)<\/p><\/div>"}, {"id": "8f792375a9ac529c", "x": 840, "y": -1720, "w": 400, "h": 400, "type": "file", "content": "<div class=\"card-title\">newtons laws.md<\/div><div class=\"note-content\"><p>First Law (Law of Inertia)<\/p>\n<ul>\n<li>An object at rest stays at rest, and an object in motion stays in motion at a constant speed in a straight line, unless acted upon by an unbalanced external force.<\/li>\n<\/ul>\n<p>Second Law (Force and Acceleration) <\/p>\n<ul>\n<li>Acceleration depends on net force and mass, meaning heavier objects require more force to accelerate.<\/li>\n<\/ul>\n<p>Third Law (Action and Reaction) <\/p>\n<ul>\n<li>For every action, there is an equal and opposite reaction, meaning interacting objects exert equal and opposite forces on each other. <\/li>\n<\/ul><\/div>"}, {"id": "93ef06d533b6ff41", "x": 1293, "y": -1960, "w": 400, "h": 400, "type": "file", "content": "<div class=\"card-title\">Types of forces.md<\/div><div class=\"note-content\"><p>(contact forces)<\/p>\n<p>tension<\/p>\n<p>friction<\/p>\n<p>air resistance<\/p>\n<p>normal contact force<\/p>\n<p>thrust<\/p>\n<p>elastic force<\/p>\n<p>(non contact)<\/p>\n<p>weight<\/p>\n<p>magnetic force<\/p>\n<p>other info:<\/p>\n<p>-surface area does NOT affect friction<\/p>\n<p>-friction is proportional to normal force (if 2 surfaces push harder against each other, frictional force will also be higher)(higher mass usually means higher friction)<\/p>\n<p>-if 2 opposing forces are the same strength, <em>the net force is 0<\/em> this is called balanced forces.<\/p><\/div>"}, {"id": "49f86867a6e413d3", "x": 1640, "y": -1490, "w": 400, "h": 400, "type": "file", "content": "<div class=\"card-title\">Lever classes.md<\/div><div class=\"note-content\"><p>Fulcrum is the pivot point<\/p>\n<p>Load is the, well, load.<\/p>\n<p>Effort is where the lever is pushed<\/p>\n<p>first-class <\/p>\n<p>Effort → Fulcrum → Load<\/p>\n<p>e.g scissors or seesaw<\/p>\n<p>mainly to pry, lift or balance heavy objects<\/p>\n<p>second-class<\/p>\n<p>Effort → Load → Fulcrum<\/p>\n<p>e.g wheelbarrow, bottle opener<\/p>\n<p>mainly to crush, cut or carry heavy stuff with less effort<\/p>\n<p>third-class<\/p>\n<p>Fulcrum → Effort → Load<\/p>\n<p>e.g human arm (weight lifting), tweezers<\/p>\n<p>mainly for handling delicate or small items or to cover a large distance quickly like swinging or sweeping<\/p><\/div>"}, {"id": "eca5389444bac853", "x": 1560, "y": -1060, "w": 400, "h": 400, "type": "file", "content": "<div class=\"card-title\">Density and pressure.md<\/div><div class=\"note-content\"><p>Low pressure zones will cause <em>fluids to move from areas of higher pressure toward areas of lower pressure<\/em>. Solids that are between the low pressure zone and high pressure zone will experience <em>stress<\/em> within itself and if the tension is too high, <em>the solid can implode, crack or pop.<\/em><\/p>\n<p>Bernoulli&#x27;s effect<\/p>\n<p>a fluid moving at a higher speed will have less internal pressure. e.g when a plane flys, the air around it moves faster. The higher pressure air underneath the plane will be pushed into the lower pressure moving air above and push the airplane upward.<\/p><\/div>"}, {"id": "1c76562838c38242", "x": 318, "y": -1690, "w": 400, "h": 400, "type": "file", "content": "<div class=\"card-title\">SI units and how to calculate them.md<\/div><div class=\"note-content\"><p>Newton (N) - Measure force <\/p>\n<p>-force needed to accelerate obj at &quot;speed&quot; -(mass <em>kg<\/em> <em> (&quot;speed&quot; <\/em>m/s*)^2)<\/p>\n<p>-weight of obj<\/p>\n<p>-(Mass <em>kg<\/em> <em> gravity strength <\/em>N/kg*)<\/p>\n<p>Newton meter (Nm) - Measure torque/rotational force<\/p>\n<p>-(Force <em>N<\/em> <em> distance <\/em>m*)<\/p>\n<p>Kilogram (Kg) - Mass of object<\/p>\n<p>-(Weight <em>N<\/em> / gravity strength <em>N/kg<\/em>)<\/p>\n<p>Pascal (Pa) - Pressure exerted<\/p>\n<p>-(Force <em>N<\/em> / area <em>m^2<\/em>)<\/p>\n<p>Density (kg/m^3) - Amount of matter packed into an amount of space<\/p>\n<p>-(mass <em>kg<\/em> / volume <em>m^3<\/em>)<\/p>\n<p>Joule (J) -  Energy <\/p>\n<p>-work done<\/p>\n<p>-(Force <em>N<\/em> <em> distance <\/em>m*)<\/p>\n<p>-kinetic energy<\/p>\n<p>-(0.5 <em> mass <\/em>kg<em> <\/em> speed <em>(m/s)<\/em>^2)<\/p>\n<p>then obvious stuff like distance, time and speed<\/p><\/div>"}], "edges": [{"id": "26a6108f632ee6c9", "from": "e4369d02f2241516", "to": "7e4b8746ce7dff78", "fromSide": "left", "toSide": "top"}, {"id": "04993d1940b3591d", "from": "e4369d02f2241516", "to": "267dd47a549572f0", "fromSide": "right", "toSide": "top"}, {"id": "760a2469b8135f48", "from": "267dd47a549572f0", "to": "ad5422f860d3c078", "fromSide": "right", "toSide": "left"}, {"id": "cc70a7b142ff6b93", "from": "267dd47a549572f0", "to": "e36aa2a84933c61a", "fromSide": "right", "toSide": "left"}, {"id": "f9d0c07b6f5cd3a1", "from": "ad5422f860d3c078", "to": "8f792375a9ac529c", "fromSide": "right", "toSide": "bottom"}, {"id": "de0999eb6e6d2b9d", "from": "ad5422f860d3c078", "to": "93ef06d533b6ff41", "fromSide": "right", "toSide": "bottom"}, {"id": "03e326552d1a05b7", "from": "e36aa2a84933c61a", "to": "ed95a89d29162288", "fromSide": "bottom", "toSide": "top"}, {"id": "c3b8d9325f50fb24", "from": "ad5422f860d3c078", "to": "49f86867a6e413d3", "fromSide": "right", "toSide": "left"}, {"id": "487b2b1b3ef19859", "from": "267dd47a549572f0", "to": "1c76562838c38242", "fromSide": "top", "toSide": "bottom"}, {"id": "c74267e7f8d7b01f", "from": "ad5422f860d3c078", "to": "eca5389444bac853", "fromSide": "right", "toSide": "left"}]};
+const world=document.getElementById('world');
+const viewport=document.getElementById('viewport');
+const zoomLabel=document.getElementById('zoomLabel');
+let scale=1, panX=0, panY=0, dragging=false, lastX=0,lastY=0;
+
+const byId={};
+DATA.nodes.forEach(n=>byId[n.id]=n);
+
+function applyTransform(){
+  world.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;
+  zoomLabel.textContent=Math.round(scale*100)+'%';
+}
+
+function render(){
+  world.innerHTML='';
+  // Edges are SVG paths underneath the cards.
+  const xs=DATA.nodes.map(n=>n.x), ys=DATA.nodes.map(n=>n.y);
+  const minX=Math.min(...xs)-1000, minY=Math.min(...ys)-1000;
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('edge');
+  svg.style.left=minX+'px'; svg.style.top=minY+'px';
+  svg.setAttribute('width','4000'); svg.setAttribute('height','4000');
+  svg.setAttribute('viewBox','0 0 4000 4000');
+  DATA.edges.forEach(e=>{
+    const a=byId[e.from],b=byId[e.to]; if(!a||!b)return;
+    const ax=a.x+a.w/2-minX, ay=a.y+a.h/2-minY;
+    const bx=b.x+b.w/2-minX, by=b.y+b.h/2-minY;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',ax);line.setAttribute('y1',ay);
+    line.setAttribute('x2',bx);line.setAttribute('y2',by);
+    line.setAttribute('stroke','#999');line.setAttribute('stroke-width','2');
+    svg.appendChild(line);
+  });
+  world.appendChild(svg);
+
+  DATA.nodes.forEach(n=>{
+    const d=document.createElement('div');
+    d.className='card '+(n.type==='file'?'file':'text');
+    d.style.left=n.x+'px'; d.style.top=n.y+'px';
+    d.style.width=n.w+'px'; d.style.height=n.h+'px';
+    d.innerHTML=n.content;
+    world.appendChild(d);
+  });
+  applyTransform();
+}
+
+function setZoom(newScale, cx=innerWidth/2, cy=innerHeight/2){
+  newScale=Math.max(.15,Math.min(4,newScale));
+  const wx=(cx-panX)/scale, wy=(cy-panY)/scale;
+  scale=newScale;
+  panX=cx-wx*scale; panY=cy-wy*scale;
+  applyTransform();
+}
+viewport.addEventListener('wheel',e=>{e.preventDefault();setZoom(scale*Math.exp(-e.deltaY*.001),e.clientX,e.clientY)},{passive:false});
+viewport.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;viewport.classList.add('dragging');viewport.setPointerCapture(e.pointerId)});
+viewport.addEventListener('pointermove',e=>{if(!dragging)return;panX+=e.clientX-lastX;panY+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;applyTransform()});
+viewport.addEventListener('pointerup',()=>{dragging=false;viewport.classList.remove('dragging')});
+
+document.getElementById('plus').onclick=()=>setZoom(scale*1.2);
+document.getElementById('minus').onclick=()=>setZoom(scale/1.2);
+document.getElementById('reset').onclick=()=>{scale=1;panX=40;panY=40;applyTransform()};
+
+document.getElementById('fit').onclick=()=>{
+  const pad=80;
+  const minX=Math.min(...DATA.nodes.map(n=>n.x));
+  const minY=Math.min(...DATA.nodes.map(n=>n.y));
+  const maxX=Math.max(...DATA.nodes.map(n=>n.x+n.w));
+  const maxY=Math.max(...DATA.nodes.map(n=>n.y+n.h));
+  const s=Math.min((innerWidth-pad*2)/(maxX-minX),(innerHeight-pad*2)/(maxY-minY),1);
+  scale=s;
+  panX=(innerWidth-(maxX-minX)*s)/2-minX*s;
+  panY=(innerHeight-(maxY-minY)*s)/2-minY*s;
+  applyTransform();
+};
+window.addEventListener('resize',()=>document.getElementById('fit').click());
+render();
+document.getElementById('fit').click();
+</script>
+</body>
+</html>
